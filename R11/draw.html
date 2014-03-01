@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="initial-scale=1, user-scalable=no, maximum-scale=1.0" />
+	<title>somegamesimade.com</title>
+</head>
+<body>
+	<script src="init.js"></script>
+	<script>
+		R11.loadScript(
+			"tools/number",
+			"tools/saveSystem",
+			"tools/font",
+			"keys/keys",
+			"keys/drawKeys",
+			"tools/controller",
+			"tools/canvas",
+			"tools/ball",
+			"tools/Grid",
+			"app/draw"
+			);
+		window.onload = function () {
+			R11.app.draw();
+		};
+	</script>
+</body>
+</html>
