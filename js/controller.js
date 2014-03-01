@@ -1,12 +1,12 @@
 R11.controller = {
     map: {},
     key: null,
-    platform: (nwf && !window.wiiu) ? "wiiu": (window.wiiu) ? "wiiuBrowser": "pc",
+    platform: (nwf && !window.wiiu) ? "wiiu" : (window.wiiu) ? "wiiuBrowser" : "pc",
     mapControls: function (a, b) {
         var idx, m = this.map;
         for (idx in a) {
             a[idx].hasOwnProperty && b[idx] &&
-                (m[b[idx]] = a[idx]);
+            (m[b[idx]] = a[idx]);
         }
         return this;
     },
@@ -16,7 +16,7 @@ R11.controller = {
     },
     events: {},
     loadEvents: function (evt) {
-        this.events = (evt === false) ? {}: evt || this.events;
+        this.events = (evt === false) ? {} : evt || this.events;
         return this;
     },
     compare: function () {
@@ -24,7 +24,7 @@ R11.controller = {
         if (k && m[k]) {
             a = this.events;
             (typeof a[m[k]] === "function") &&
-                    a[m[k]]();
+            a[m[k]]();
         }
         else {
             console.log((k || "no key") + " gets no action");
@@ -38,13 +38,14 @@ R11.controller = {
     },
     checkPlatform: function () {
         var p = this.platform;
-        this["is"+p] &&
-            this["is"+p]();
+        this["is" + p] &&
+        this["is" + p]();
         return this;
     },
     check: function (e) {
         this.getKey(e).checkPlatform().compare();
         return this;
     },
-    touch: function () {},
+    touch: function () {
+    },
 };

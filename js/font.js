@@ -48,8 +48,8 @@ R11.fontFunction = {
             ctx = obj.ctx,
             rows = text.split(/\/n/).length;
             font = R11.font;
-        ctx.lineWidth = obj.lineWidth || 3;
-        ctx.strokeStyle = obj.strokeStyle || "black";
+        //   ctx.lineWidth = obj.lineWidth || 3;
+        //     ctx.strokeStyle = obj.strokeStyle || "black";
         for (i = 0; i <= l; i += 1) {
             t = text[i];
             if (t && font[t]) {
@@ -403,7 +403,7 @@ R11.font = {
             x = lw,
             x2 = a1,
             x3 = ws - a1 - a2,
-            x4 = x + x2 + x3 - a1,
+            x4 = x3 + a1 - x,
             y = a1,
             y2 = lw,
             y3 = hs - y,

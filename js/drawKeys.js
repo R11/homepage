@@ -41,7 +41,7 @@ R11.drawKeys = {
         "Lstick": "gridOff",
         "Rstick": "gridOn",
         "ZL": "toggleGrid",
-        "B": "gridReduce", 
+        "B": "gridReduce",
         "A": "nextChart",
         "X": "gridExpand",
         "Y": "prevChart",

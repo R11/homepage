@@ -6,7 +6,7 @@ R11.HUD = function (obj) {
     this.ctx = this.canvas.ctx || this.canvas.init().ctx;
     this.buttonSelected = false;
     this.buttons = [];  // the collection of things to be drawn
-    
+
     this.canvas.onmousedown = function (e) {
         that.checkButtons("mousedown", e);
     };
@@ -22,7 +22,7 @@ R11.HUD = function (obj) {
     this.canvas.onmouseout = function (e) {
         that.checkButtons("mouseout", e);
     };
-    this.canvas.ondblclick  = function (e) {
+    this.canvas.ondblclick = function (e) {
         that.checkButtons("dblclick", e);
     };
     this.canvas.onkeydown = function (e) {
@@ -30,6 +30,9 @@ R11.HUD = function (obj) {
     };
     this.canvas.onkeyup = function (e) {
         that.checkButtons("keyup", e);
+    };
+    this.canvas.onmousewheel = function (e) {
+        that.checkButtons("mousewheel", e);
     };
     if (window.wiiu) {
         window.setInterval(this.wiiu, 20);
@@ -40,12 +43,12 @@ R11.HUD = function (obj) {
 R11.HUD.prototype = {
     loadButtons: function () {
         var button = this.buttons,
-            b;    
+            b;
         for (var i = button.length - 1; i >= 0; i -= 1) {
             b = button[i];
             b.on && typeof b.onload === "function" && b.onload(this.ctx);
             b.on && typeof b.load === "function" && b.load();
-            
+
         }
         return this;
     },
@@ -60,7 +63,7 @@ R11.HUD.prototype = {
                 b = button[i];
                 if (b.on === 1 && this.contains(b, x, y)) {
                     b[func] && typeof b[func] === "function" && b[func](e);
-                    b[f] && typeof b[f] === "function" &&  b[f](e);
+                    b[f] && typeof b[f] === "function" && b[f](e);
                     this[func] = true;
                     this.buttonSelected = true;
                 } else {
@@ -74,7 +77,7 @@ R11.HUD.prototype = {
         }
         return this;
     },
-    addButton: function() {
+    addButton: function () {
         var length = arguments.length, b;
         if (length > 0) {
             for (var l = length - 1; l >= 0; l--) {
@@ -98,6 +101,6 @@ R11.HUD.prototype = {
     },
     contains: function (box, x, y) {
         return (box.x <= x) && (box.x + box.w >= x) &&
-              (box.y <= y) && (box.y + box.h >= y);
+            (box.y <= y) && (box.y + box.h >= y);
     }
 }

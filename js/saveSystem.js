@@ -1,3 +1,19 @@
+R11.saveSystem = {
+    retrieve: function (file) {
+        return JSON.parse(localStorage.getItem(file)) || false;
+    },
+    create: function (file, value) {
+        return localStorage.setItem(file, JSON.stringify(value));
+    },
+    clearAll: function () {
+        return localStorage.clear();
+    },
+    remove: function (file) {
+        return localStorage.removeItem(file);
+    }
+}
+
+
 //localStorage.retrieve = function (obj) {
 //        return JSON.parse(this[obj])
 //}

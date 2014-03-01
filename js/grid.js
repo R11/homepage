@@ -1,7 +1,7 @@
 R11.Grid = function (obj) {
     obj && R11.modifyWith(obj, this);
     this.init();
-}
+};
 
 R11.Grid.prototype = {
     canvas: false,
@@ -21,16 +21,15 @@ R11.Grid.prototype = {
     id: "grid",
     init: function () {
         !this.canvas &&
-            (this.canvas = R11.getCanvas("grid", 80));//new R11.Canvas({ id: this.id, zIndex: this.zIndex, buffer: false}));
+        (this.canvas = R11.getCanvas("grid", 80));//new R11.Canvas({ id: this.id, zIndex: this.zIndex, buffer: false}));
         !this.ctx &&
-            (this.ctx = this.canvas.ctx || this.canvas.init().ctx);
+        (this.ctx = this.canvas.ctx || this.canvas.init().ctx);
         this.update();
         return this;
     },
     color: "black",
     setColor: function (color) {
-        this.ctx.fillStyle = color || this.color || "black";
-        return this;
+        return color || this.color || "black";
     },
     update: function (z) {
         var f, e,
@@ -57,9 +56,9 @@ R11.Grid.prototype = {
         var g = this.zoom + t,
             min = this.min,
             max = this.max;
-        this.zoom = (!g || g <= min) ? min:
-                        (g >= max) ? max:
-                            g;
+        this.zoom = (!g || g <= min) ? min :
+            (g >= max) ? max :
+                g;
         return Math.pow(2, this.zoom);
     },
     reset: function () {
@@ -106,9 +105,9 @@ R11.grid = function (c) {
             var g = this.zoom + t,
                 min = this.min,
                 max = this.max;
-            this.zoom = (!g || g <= min) ? min:
-                            (g >= max) ? max:
-                                g;
+            this.zoom = (!g || g <= min) ? min :
+                (g >= max) ? max :
+                    g;
             return Math.pow(2, this.zoom);
         },
         reset: function () {
