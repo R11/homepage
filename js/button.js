@@ -8,7 +8,7 @@ R11.Button.prototype = {
     on: 1,
     textw: 0.7,
     texth: 0.7,
-    default: true,
+    defaultButton: true,
     id: "",
     makeButton: function (style) {
         var w = 500,
@@ -63,7 +63,7 @@ R11.Button.prototype = {
     setStyle: function (style) {
         if (this[style + "img"]) {
             this.placeImg(this[style + "img"]);
-        } else if (this.default) {
+        } else if (this.defaultButton) {
             this[style + "img"] = this.makeButton(style);
         }
         return this;
@@ -105,10 +105,10 @@ R11.Button.prototype = {
     onmousewheel: function () {
 
     },
-    onload: function (ctx) {
+    onload: function (canvas) {
         var sfiles = R11.saveSystem.retrieve(this.id);
-
-        this.ctx = ctx;
+        this.canvas = canvas || R11.getCanvas(this.id, 80);
+        this.ctx = this.canvas.ctx;
         this.ctx.lineWidth = this.lineWidth = 8;
 
         sfiles && R11.modifyWith(sfiles, this);
