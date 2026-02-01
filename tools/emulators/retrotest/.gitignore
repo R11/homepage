@@ -1,0 +1,15 @@
+# Build artifacts
+build/
+
+# Generated test ROM
+testrom/hello.md
+
+# Core files (downloaded or built)
+cores/
+
+# State files
+*.state
+*.sav
+
+# Memory dumps
+*.bin
