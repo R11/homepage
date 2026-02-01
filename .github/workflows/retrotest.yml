@@ -1,0 +1,90 @@
+name: RetroTest CI
+
+on:
+  push:
+    paths:
+      - 'tools/emulators/retrotest/**'
+      - 'lib/**'
+      - 'tests/**'
+      - '.github/workflows/retrotest.yml'
+  pull_request:
+    paths:
+      - 'tools/emulators/retrotest/**'
+      - 'lib/**'
+      - 'tests/**'
+
+jobs:
+  build-retrotest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Build RetroTest
+        working-directory: tools/emulators/retrotest
+        run: make all
+
+      - name: Upload RetroTest binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: retrotest-linux
+          path: tools/emulators/retrotest/build/retrotest
+
+  build-docker:
+    runs-on: ubuntu-latest
+    needs: build-retrotest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        working-directory: tools/emulators/retrotest
+        run: |
+          docker build -t retrotest:latest -f docker/Dockerfile .
+
+      - name: Test Docker image
+        run: |
+          docker run --rm retrotest:latest retrotest --help
+
+      # Optionally push to registry
+      # - name: Push to GitHub Container Registry
+      #   if: github.ref == 'refs/heads/main'
+      #   run: |
+      #     echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      #     docker tag retrotest:latest ghcr.io/${{ github.repository }}/retrotest:latest
+      #     docker push ghcr.io/${{ github.repository }}/retrotest:latest
+
+  # Example test job - uncomment and configure with actual test ROMs
+  # run-tests:
+  #   runs-on: ubuntu-latest
+  #   needs: build-docker
+  #
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Download test ROMs
+  #       run: |
+  #         # Download your test ROMs here
+  #         # These should be homebrew/test ROMs you have rights to use
+  #         mkdir -p test_roms
+  #         # curl -o test_roms/test.md https://example.com/test.md
+  #
+  #     - name: Run Saturn tests
+  #       run: |
+  #         docker run --rm -v $(pwd)/test_roms:/roms retrotest:latest \
+  #           retrotest -c /cores/mednafen_saturn_libretro.so \
+  #           -r /roms/saturn_test.iso -f 300 -h EXPECTED_HASH
+  #
+  #     - name: Run N64 tests
+  #       run: |
+  #         docker run --rm -v $(pwd)/test_roms:/roms retrotest:latest \
+  #           retrotest -c /cores/mupen64plus_next_libretro.so \
+  #           -r /roms/n64_test.z64 -f 300 -h EXPECTED_HASH
