@@ -359,7 +359,7 @@ void retrotest_destroy(retrotest_ctx_t* ctx) {
 
 /* Load symbol from core library */
 #define LOAD_SYM(name) \
-    ctx->core_##name = (name##_t)dlsym(ctx->core_handle, "retro_" #name); \
+    ctx->core_##name = (retro_##name##_t)dlsym(ctx->core_handle, "retro_" #name); \
     if (!ctx->core_##name) { \
         retrotest_log(RETROTEST_LOG_ERROR, "Missing symbol: retro_" #name); \
         dlclose(ctx->core_handle); \

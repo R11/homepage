@@ -33,19 +33,54 @@ $(STATIC_LIB): $(OBJECTS)
 	@mkdir -p $(dir $@)
 	ar rcs $@ $^
 
-# CLI tool
-$(CLI): $(SRC_DIR)/main.c $(STATIC_LIB)
+# CLI tool (statically linked)
+$(CLI): $(SRC_DIR)/main.c $(OBJECTS)
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -I$(INC_DIR) -o $@ $< -L$(BUILD_DIR) -lretrotest $(LDFLAGS)
+	$(CC) $(CFLAGS) -I$(INC_DIR) -o $@ $^ $(LDFLAGS)
 
 # Object files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -I$(INC_DIR) -c -o $@ $<
 
+# Mock core for testing
+MOCK_CORE = $(BUILD_DIR)/mock_core_libretro.so
+
+$(MOCK_CORE): testrom/mock_core.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -shared -o $@ $<
+
+# Test ROM
+TEST_ROM = testrom/hello.md
+
+$(TEST_ROM): testrom/gen_genesis_hello.py
+	cd testrom && python3 gen_genesis_hello.py hello.md
+
+# Run the full test pipeline
+test: $(CLI) $(MOCK_CORE) $(TEST_ROM)
+	@echo ""
+	@echo "=== RetroTest Pipeline Test ==="
+	@echo ""
+	@echo "1. Running 60 frames and printing hash..."
+	./$(CLI) -c $(MOCK_CORE) -r $(TEST_ROM) -f 60 -H -v
+	@echo ""
+	@echo "2. Running 120 frames and checking memory..."
+	./$(CLI) -c $(MOCK_CORE) -r $(TEST_ROM) -f 120 -H
+	@echo ""
+	@echo "3. Saving and loading state..."
+	./$(CLI) -c $(MOCK_CORE) -r $(TEST_ROM) -f 30 -S $(BUILD_DIR)/test.state
+	./$(CLI) -c $(MOCK_CORE) -r $(TEST_ROM) -s $(BUILD_DIR)/test.state -f 30 -H
+	@echo ""
+	@echo "4. Dumping memory..."
+	./$(CLI) -c $(MOCK_CORE) -r $(TEST_ROM) -f 60 -m 2 $(BUILD_DIR)/ram.bin
+	@ls -la $(BUILD_DIR)/ram.bin
+	@echo ""
+	@echo "=== All tests passed! ==="
+
 # Clean
 clean:
 	rm -rf $(BUILD_DIR)
+	rm -f testrom/hello.md
 
 # Docker
 docker-build:
