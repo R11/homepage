@@ -1,0 +1,64 @@
+{
+    "_comment": "Expected frame hashes for graphics tests. Platform-specific due to resolution/color depth differences.",
+    "_format": "platform -> test_name -> { hash, notes }",
+    "_generated": "Auto-populated on first run, manually verified after",
+
+    "gfx_mock": {
+        "_resolution": "320x240",
+        "_color_depth": "RGB565",
+        "primitives": {
+            "hash": null,
+            "notes": "Basic shapes test"
+        },
+        "lines": {
+            "hash": null,
+            "notes": "Radial lines from center"
+        },
+        "triangles": {
+            "hash": null,
+            "notes": "Triangle outlines and fills"
+        },
+        "clipping": {
+            "hash": null,
+            "notes": "Edge clipping verification"
+        },
+        "stress": {
+            "hash": null,
+            "notes": "Many overlapping primitives"
+        },
+        "all": {
+            "hash": null,
+            "notes": "Combined test"
+        }
+    },
+
+    "genesis": {
+        "_resolution": "320x224",
+        "_color_depth": "RGB565 (9-bit palette)",
+        "_notes": "Genesis has 512-color palette, tests may need color adjustment"
+    },
+
+    "saturn": {
+        "_resolution": "320x224",
+        "_color_depth": "RGB565 (15-bit)",
+        "_notes": "Saturn VDP1 uses quads, triangles converted"
+    },
+
+    "n64": {
+        "_resolution": "320x240",
+        "_color_depth": "RGB565 (16-bit)",
+        "_notes": "N64 native resolution, best match for reference"
+    },
+
+    "snes": {
+        "_resolution": "256x224",
+        "_color_depth": "RGB565 (15-bit palette)",
+        "_notes": "Lower resolution, tests scaled/offset"
+    },
+
+    "dreamcast": {
+        "_resolution": "640x480",
+        "_color_depth": "RGB565 (16-bit)",
+        "_notes": "Higher resolution, tests scaled up"
+    }
+}

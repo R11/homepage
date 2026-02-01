@@ -1,0 +1,8 @@
+# Graphics Test Baseline
+# Generated: 2026-02-01T20:36:11+00:00
+gfx_mock:primitives:3603682a3892dac1
+gfx_mock:lines:7a32865dfc7ca201
+gfx_mock:triangles:29242739518fef2d
+gfx_mock:clipping:b6ccddb71a8927b9
+gfx_mock:stress:2bbdfba0cd04e915
+gfx_mock:all:c2bb80136920a5f5

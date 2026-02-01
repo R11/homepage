@@ -402,18 +402,22 @@ bool retrotest_load_core(retrotest_ctx_t* ctx, const char* path) {
     LOAD_SYM(get_memory_data);
     LOAD_SYM(get_memory_size);
 
-    /* Set up callbacks */
+    /* Set up global context for callbacks */
     g_ctx = ctx;
+
+    /* Per libretro spec: set_environment must be called before init */
     ctx->core_set_environment(cb_environment);
+
+    /* Initialize core */
+    ctx->core_init();
+    ctx->core_get_system_info(&ctx->system_info);
+
+    /* Set remaining callbacks after init (they may be cleared by init) */
     ctx->core_set_video_refresh(cb_video_refresh);
     ctx->core_set_audio_sample(cb_audio_sample);
     ctx->core_set_audio_sample_batch(cb_audio_sample_batch);
     ctx->core_set_input_poll(cb_input_poll);
     ctx->core_set_input_state(cb_input_state);
-
-    /* Initialize core */
-    ctx->core_init();
-    ctx->core_get_system_info(&ctx->system_info);
 
     retrotest_log(RETROTEST_LOG_INFO, "Core loaded: %s %s",
                  ctx->system_info.library_name,

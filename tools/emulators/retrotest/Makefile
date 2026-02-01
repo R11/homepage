@@ -77,6 +77,12 @@ $(DC_MOCK_CORE): testrom/dc_mock_core.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -shared -o $@ $<
 
+# Graphics test mock core
+GFX_MOCK_CORE = $(BUILD_DIR)/gfx_mock_core_libretro.so
+$(GFX_MOCK_CORE): testrom/gfx_mock_core.c include/gfx_tests.h
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -shared -o $@ $<
+
 # =============================================================================
 # Test ROMs/Disc Images
 # =============================================================================
@@ -105,6 +111,12 @@ $(SNES_TEST_ROM): testrom/gen_snes_hello.py
 DC_TEST_DISC = testrom/dc_test.cue
 $(DC_TEST_DISC): testrom/gen_dc_hello.py
 	cd testrom && python3 gen_dc_hello.py dc_test
+
+# Graphics test ROMs
+GFX_TEST_DIR = $(BUILD_DIR)/gfx_tests
+GFX_TEST_ROMS = $(GFX_TEST_DIR)/gfx_primitives.gfx
+$(GFX_TEST_ROMS): testrom/gen_gfx_tests.py
+	python3 testrom/gen_gfx_tests.py $(GFX_TEST_DIR)
 
 # =============================================================================
 # Test Targets
@@ -240,6 +252,60 @@ test-dc: $(CLI) $(DC_MOCK_CORE) $(DC_TEST_DISC)
 	@echo "=== Dreamcast tests passed! ==="
 
 # =============================================================================
+# Graphics Primitive Tests
+# =============================================================================
+
+GFX_TESTS = primitives lines triangles clipping stress all
+
+# Graphics test core and ROMs
+test-gfx: $(CLI) $(GFX_MOCK_CORE) $(GFX_TEST_ROMS)
+	@echo ""
+	@echo "=== Graphics Primitive Tests ==="
+	@echo ""
+	@for test in $(GFX_TESTS); do \
+		echo "Testing: $$test"; \
+		./$(CLI) -c $(GFX_MOCK_CORE) -r $(GFX_TEST_DIR)/gfx_$$test.gfx -f 5 -H; \
+		echo ""; \
+	done
+	@echo "=== Graphics tests completed! ==="
+
+# Generate baseline hashes
+test-gfx-baseline: $(CLI) $(GFX_MOCK_CORE) $(GFX_TEST_ROMS)
+	@echo "Generating graphics test baseline..."
+	@echo "# Graphics Test Baseline" > tests/gfx_baseline.txt
+	@echo "# Generated: $$(date -Iseconds)" >> tests/gfx_baseline.txt
+	@for test in $(GFX_TESTS); do \
+		hash=$$(./$(CLI) -c $(GFX_MOCK_CORE) -r $(GFX_TEST_DIR)/gfx_$$test.gfx -f 5 -H 2>/dev/null | grep frame_hash | awk '{print $$2}'); \
+		echo "gfx_mock:$$test:$$hash" >> tests/gfx_baseline.txt; \
+		echo "  $$test: $$hash"; \
+	done
+	@echo ""
+	@echo "Baseline saved to tests/gfx_baseline.txt"
+
+# Verify against baseline
+test-gfx-verify: $(CLI) $(GFX_MOCK_CORE) $(GFX_TEST_ROMS)
+	@echo "Verifying graphics tests against baseline..."
+	@pass=0; fail=0; \
+	while IFS=: read -r platform test expected; do \
+		case "$$platform" in \#*|"") continue;; esac; \
+		actual=$$(./$(CLI) -c $(GFX_MOCK_CORE) -r $(GFX_TEST_DIR)/gfx_$$test.gfx -f 5 -H 2>/dev/null | grep frame_hash | awk '{print $$2}'); \
+		if [ "$$actual" = "$$expected" ]; then \
+			echo "[PASS] $$test"; \
+			pass=$$((pass + 1)); \
+		else \
+			echo "[FAIL] $$test (expected: $$expected, got: $$actual)"; \
+			fail=$$((fail + 1)); \
+		fi; \
+	done < tests/gfx_baseline.txt; \
+	echo ""; \
+	echo "Results: $$pass passed, $$fail failed"; \
+	[ "$$fail" -eq 0 ]
+
+# Run graphics test script
+test-gfx-full: $(CLI) $(GFX_MOCK_CORE) $(GFX_TEST_ROMS)
+	./tests/run_gfx_tests.sh run
+
+# =============================================================================
 # Real Core Testing (when cores are available)
 # =============================================================================
 
@@ -273,6 +339,7 @@ clean:
 	rm -f testrom/n64_test.z64
 	rm -f testrom/snes_test.sfc
 	rm -f testrom/dc_test.bin testrom/dc_test.cue
+	rm -rf $(GFX_TEST_DIR)
 
 # Docker
 docker-build:
