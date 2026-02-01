@@ -1,8 +1,10 @@
 # Build artifacts
 build/
 
-# Generated test ROM
+# Generated test ROMs/discs
 testrom/hello.md
+testrom/saturn_test.bin
+testrom/saturn_test.cue
 
 # Core files (downloaded or built)
 cores/

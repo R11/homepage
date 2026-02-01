@@ -43,21 +43,54 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -I$(INC_DIR) -c -o $@ $<
 
-# Mock core for testing
-MOCK_CORE = $(BUILD_DIR)/mock_core_libretro.so
+# =============================================================================
+# Mock Cores for testing without external dependencies
+# =============================================================================
 
-$(MOCK_CORE): testrom/mock_core.c
+# Genesis mock core
+GENESIS_MOCK_CORE = $(BUILD_DIR)/mock_core_libretro.so
+$(GENESIS_MOCK_CORE): testrom/mock_core.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -shared -o $@ $<
 
-# Test ROM
-TEST_ROM = testrom/hello.md
+# Saturn mock core
+SATURN_MOCK_CORE = $(BUILD_DIR)/saturn_mock_core_libretro.so
+$(SATURN_MOCK_CORE): testrom/saturn_mock_core.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -shared -o $@ $<
 
-$(TEST_ROM): testrom/gen_genesis_hello.py
+# =============================================================================
+# Test ROMs/Disc Images
+# =============================================================================
+
+# Genesis test ROM
+GENESIS_TEST_ROM = testrom/hello.md
+$(GENESIS_TEST_ROM): testrom/gen_genesis_hello.py
 	cd testrom && python3 gen_genesis_hello.py hello.md
 
-# Run the full test pipeline
-test: $(CLI) $(MOCK_CORE) $(TEST_ROM)
+# Saturn test disc
+SATURN_TEST_DISC = testrom/saturn_test.cue
+$(SATURN_TEST_DISC): testrom/gen_saturn_hello.py
+	cd testrom && python3 gen_saturn_hello.py saturn_test
+
+# =============================================================================
+# Test Targets
+# =============================================================================
+
+# Backwards compatibility
+MOCK_CORE = $(GENESIS_MOCK_CORE)
+TEST_ROM = $(GENESIS_TEST_ROM)
+
+# Run Genesis tests (default)
+test: test-genesis
+
+# Run all platform tests
+test-all: test-genesis test-saturn
+	@echo ""
+	@echo "=== All platform tests passed! ==="
+
+# Genesis tests
+test-genesis: $(CLI) $(GENESIS_MOCK_CORE) $(GENESIS_TEST_ROM)
 	@echo ""
 	@echo "=== RetroTest Pipeline Test ==="
 	@echo ""
@@ -75,12 +108,63 @@ test: $(CLI) $(MOCK_CORE) $(TEST_ROM)
 	./$(CLI) -c $(MOCK_CORE) -r $(TEST_ROM) -f 60 -m 2 $(BUILD_DIR)/ram.bin
 	@ls -la $(BUILD_DIR)/ram.bin
 	@echo ""
-	@echo "=== All tests passed! ==="
+	@echo "=== Genesis tests passed! ==="
+
+# Saturn tests
+test-saturn: $(CLI) $(SATURN_MOCK_CORE) $(SATURN_TEST_DISC)
+	@echo ""
+	@echo "=== Saturn RetroTest Pipeline Test ==="
+	@echo ""
+	@echo "1. Running 60 frames with Saturn mock core..."
+	./$(CLI) -c $(SATURN_MOCK_CORE) -r $(SATURN_TEST_DISC) -f 60 -H -v
+	@echo ""
+	@echo "2. Running 120 frames and checking memory..."
+	./$(CLI) -c $(SATURN_MOCK_CORE) -r $(SATURN_TEST_DISC) -f 120 -H
+	@echo ""
+	@echo "3. Testing Saturn state save/load..."
+	./$(CLI) -c $(SATURN_MOCK_CORE) -r $(SATURN_TEST_DISC) -f 30 -S $(BUILD_DIR)/saturn.state
+	./$(CLI) -c $(SATURN_MOCK_CORE) -r $(SATURN_TEST_DISC) -s $(BUILD_DIR)/saturn.state -f 30 -H
+	@echo ""
+	@echo "4. Dumping Saturn Work RAM..."
+	./$(CLI) -c $(SATURN_MOCK_CORE) -r $(SATURN_TEST_DISC) -f 60 -m 2 $(BUILD_DIR)/saturn_wram.bin
+	@ls -la $(BUILD_DIR)/saturn_wram.bin
+	@echo ""
+	@echo "5. Checking Saturn ID string in memory..."
+	@od -A x -t c -j 256 -N 21 $(BUILD_DIR)/saturn_wram.bin
+	@echo ""
+	@echo "=== Saturn tests passed! ==="
+
+# =============================================================================
+# Real Core Testing (when cores are available)
+# =============================================================================
+
+# Test with real Genesis Plus GX core
+test-genesis-real: $(CLI) $(GENESIS_TEST_ROM)
+	@if [ -f cores/genesis_plus_gx_libretro.so ]; then \
+		echo "Testing with genesis_plus_gx..."; \
+		./$(CLI) -c cores/genesis_plus_gx_libretro.so -r $(GENESIS_TEST_ROM) -f 60 -H; \
+	else \
+		echo "Error: cores/genesis_plus_gx_libretro.so not found"; \
+		echo "Download from: https://buildbot.libretro.com/nightly/linux/x86_64/latest/"; \
+		exit 1; \
+	fi
+
+# Test with real Mednafen Saturn core
+test-saturn-real: $(CLI) $(SATURN_TEST_DISC)
+	@if [ -f cores/mednafen_saturn_libretro.so ]; then \
+		echo "Testing with mednafen_saturn..."; \
+		./$(CLI) -c cores/mednafen_saturn_libretro.so -r $(SATURN_TEST_DISC) -f 60 -H; \
+	else \
+		echo "Error: cores/mednafen_saturn_libretro.so not found"; \
+		echo "Download from: https://buildbot.libretro.com/nightly/linux/x86_64/latest/"; \
+		exit 1; \
+	fi
 
 # Clean
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -f testrom/hello.md
+	rm -f testrom/saturn_test.bin testrom/saturn_test.cue
 
 # Docker
 docker-build:
