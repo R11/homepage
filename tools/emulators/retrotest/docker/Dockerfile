@@ -38,8 +38,11 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /build/retrotest
 COPY . .
 RUN make clean && make all
-RUN make build/mock_core_libretro.so build/saturn_mock_core_libretro.so
-RUN make testrom/hello.md testrom/saturn_test.cue
+RUN make build/mock_core_libretro.so build/saturn_mock_core_libretro.so \
+        build/n64_mock_core_libretro.so build/snes_mock_core_libretro.so \
+        build/dc_mock_core_libretro.so
+RUN make testrom/hello.md testrom/saturn_test.cue testrom/n64_test.z64 \
+        testrom/snes_test.sfc testrom/dc_test.cue
 
 # =============================================================================
 # Runtime image
@@ -65,11 +68,18 @@ COPY --from=builder /build/retrotest/build/libretrotest.so /usr/local/lib/
 # Copy mock cores (always available, no network needed)
 COPY --from=builder /build/retrotest/build/mock_core_libretro.so /cores/
 COPY --from=builder /build/retrotest/build/saturn_mock_core_libretro.so /cores/
+COPY --from=builder /build/retrotest/build/n64_mock_core_libretro.so /cores/
+COPY --from=builder /build/retrotest/build/snes_mock_core_libretro.so /cores/
+COPY --from=builder /build/retrotest/build/dc_mock_core_libretro.so /cores/
 
 # Copy test ROMs/discs
 COPY --from=builder /build/retrotest/testrom/hello.md /testrom/
 COPY --from=builder /build/retrotest/testrom/saturn_test.bin /testrom/
 COPY --from=builder /build/retrotest/testrom/saturn_test.cue /testrom/
+COPY --from=builder /build/retrotest/testrom/n64_test.z64 /testrom/
+COPY --from=builder /build/retrotest/testrom/snes_test.sfc /testrom/
+COPY --from=builder /build/retrotest/testrom/dc_test.bin /testrom/
+COPY --from=builder /build/retrotest/testrom/dc_test.cue /testrom/
 
 # Create directories
 RUN mkdir -p /roms /workspace
@@ -114,11 +124,19 @@ RUN echo "=== Available cores ===" && ls -la /cores/
 
 WORKDIR /workspace
 
-# Default: run self-test with mock cores
-CMD ["sh", "-c", "echo 'Testing mock cores...' && \
+# Default: run self-test with all mock cores
+CMD ["sh", "-c", "echo 'Testing all mock cores...' && \
+     echo '=== Genesis ===' && \
      retrotest -c /cores/mock_core_libretro.so -r /testrom/hello.md -f 60 -H && \
+     echo '=== Saturn ===' && \
      retrotest -c /cores/saturn_mock_core_libretro.so -r /testrom/saturn_test.cue -f 60 -H && \
-     echo 'All tests passed!'"]
+     echo '=== N64 ===' && \
+     retrotest -c /cores/n64_mock_core_libretro.so -r /testrom/n64_test.z64 -f 60 -H && \
+     echo '=== SNES ===' && \
+     retrotest -c /cores/snes_mock_core_libretro.so -r /testrom/snes_test.sfc -f 60 -H && \
+     echo '=== Dreamcast ===' && \
+     retrotest -c /cores/dc_mock_core_libretro.so -r /testrom/dc_test.cue -f 60 -H && \
+     echo 'All platform tests passed!'"]
 
 # =============================================================================
 # Usage examples (as labels for documentation)
@@ -126,7 +144,12 @@ CMD ["sh", "-c", "echo 'Testing mock cores...' && \
 
 LABEL org.opencontainers.image.title="RetroTest"
 LABEL org.opencontainers.image.description="Headless libretro frontend for automated testing"
-LABEL usage.saturn.real="docker run --rm -v \$(pwd):/roms retrotest retrotest -c /cores/mednafen_saturn_libretro.so -r /roms/game.cue -f 300 -H"
-LABEL usage.saturn.mock="docker run --rm retrotest retrotest -c /cores/saturn_mock_core_libretro.so -r /testrom/saturn_test.cue -f 60 -H"
 LABEL usage.genesis.real="docker run --rm -v \$(pwd):/roms retrotest retrotest -c /cores/genesis_plus_gx_libretro.so -r /roms/game.md -f 300 -H"
 LABEL usage.genesis.mock="docker run --rm retrotest retrotest -c /cores/mock_core_libretro.so -r /testrom/hello.md -f 60 -H"
+LABEL usage.saturn.real="docker run --rm -v \$(pwd):/roms retrotest retrotest -c /cores/mednafen_saturn_libretro.so -r /roms/game.cue -f 300 -H"
+LABEL usage.saturn.mock="docker run --rm retrotest retrotest -c /cores/saturn_mock_core_libretro.so -r /testrom/saturn_test.cue -f 60 -H"
+LABEL usage.n64.real="docker run --rm -v \$(pwd):/roms retrotest retrotest -c /cores/mupen64plus_next_libretro.so -r /roms/game.z64 -f 300 -H"
+LABEL usage.n64.mock="docker run --rm retrotest retrotest -c /cores/n64_mock_core_libretro.so -r /testrom/n64_test.z64 -f 60 -H"
+LABEL usage.snes.real="docker run --rm -v \$(pwd):/roms retrotest retrotest -c /cores/snes9x_libretro.so -r /roms/game.sfc -f 300 -H"
+LABEL usage.snes.mock="docker run --rm retrotest retrotest -c /cores/snes_mock_core_libretro.so -r /testrom/snes_test.sfc -f 60 -H"
+LABEL usage.dc.mock="docker run --rm retrotest retrotest -c /cores/dc_mock_core_libretro.so -r /testrom/dc_test.cue -f 60 -H"

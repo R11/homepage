@@ -5,6 +5,10 @@ build/
 testrom/hello.md
 testrom/saturn_test.bin
 testrom/saturn_test.cue
+testrom/n64_test.z64
+testrom/snes_test.sfc
+testrom/dc_test.bin
+testrom/dc_test.cue
 
 # Core files (downloaded or built)
 cores/

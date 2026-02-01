@@ -59,6 +59,24 @@ $(SATURN_MOCK_CORE): testrom/saturn_mock_core.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -shared -o $@ $<
 
+# N64 mock core
+N64_MOCK_CORE = $(BUILD_DIR)/n64_mock_core_libretro.so
+$(N64_MOCK_CORE): testrom/n64_mock_core.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -shared -o $@ $< -lm
+
+# SNES mock core
+SNES_MOCK_CORE = $(BUILD_DIR)/snes_mock_core_libretro.so
+$(SNES_MOCK_CORE): testrom/snes_mock_core.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -shared -o $@ $<
+
+# Dreamcast mock core
+DC_MOCK_CORE = $(BUILD_DIR)/dc_mock_core_libretro.so
+$(DC_MOCK_CORE): testrom/dc_mock_core.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -shared -o $@ $<
+
 # =============================================================================
 # Test ROMs/Disc Images
 # =============================================================================
@@ -73,6 +91,21 @@ SATURN_TEST_DISC = testrom/saturn_test.cue
 $(SATURN_TEST_DISC): testrom/gen_saturn_hello.py
 	cd testrom && python3 gen_saturn_hello.py saturn_test
 
+# N64 test ROM
+N64_TEST_ROM = testrom/n64_test.z64
+$(N64_TEST_ROM): testrom/gen_n64_hello.py
+	cd testrom && python3 gen_n64_hello.py n64_test.z64
+
+# SNES test ROM
+SNES_TEST_ROM = testrom/snes_test.sfc
+$(SNES_TEST_ROM): testrom/gen_snes_hello.py
+	cd testrom && python3 gen_snes_hello.py snes_test.sfc
+
+# Dreamcast test disc
+DC_TEST_DISC = testrom/dc_test.cue
+$(DC_TEST_DISC): testrom/gen_dc_hello.py
+	cd testrom && python3 gen_dc_hello.py dc_test
+
 # =============================================================================
 # Test Targets
 # =============================================================================
@@ -85,7 +118,7 @@ TEST_ROM = $(GENESIS_TEST_ROM)
 test: test-genesis
 
 # Run all platform tests
-test-all: test-genesis test-saturn
+test-all: test-genesis test-saturn test-n64 test-snes test-dc
 	@echo ""
 	@echo "=== All platform tests passed! ==="
 
@@ -134,6 +167,78 @@ test-saturn: $(CLI) $(SATURN_MOCK_CORE) $(SATURN_TEST_DISC)
 	@echo ""
 	@echo "=== Saturn tests passed! ==="
 
+# N64 tests
+test-n64: $(CLI) $(N64_MOCK_CORE) $(N64_TEST_ROM)
+	@echo ""
+	@echo "=== N64 RetroTest Pipeline Test ==="
+	@echo ""
+	@echo "1. Running 60 frames with N64 mock core..."
+	./$(CLI) -c $(N64_MOCK_CORE) -r $(N64_TEST_ROM) -f 60 -H -v
+	@echo ""
+	@echo "2. Running 120 frames and checking memory..."
+	./$(CLI) -c $(N64_MOCK_CORE) -r $(N64_TEST_ROM) -f 120 -H
+	@echo ""
+	@echo "3. Testing N64 state save/load..."
+	./$(CLI) -c $(N64_MOCK_CORE) -r $(N64_TEST_ROM) -f 30 -S $(BUILD_DIR)/n64.state
+	./$(CLI) -c $(N64_MOCK_CORE) -r $(N64_TEST_ROM) -s $(BUILD_DIR)/n64.state -f 30 -H
+	@echo ""
+	@echo "4. Dumping N64 RDRAM..."
+	./$(CLI) -c $(N64_MOCK_CORE) -r $(N64_TEST_ROM) -f 60 -m 2 $(BUILD_DIR)/n64_rdram.bin
+	@ls -la $(BUILD_DIR)/n64_rdram.bin
+	@echo ""
+	@echo "5. Checking N64 ID string in memory..."
+	@od -A x -t c -j 256 -N 24 $(BUILD_DIR)/n64_rdram.bin
+	@echo ""
+	@echo "=== N64 tests passed! ==="
+
+# SNES tests
+test-snes: $(CLI) $(SNES_MOCK_CORE) $(SNES_TEST_ROM)
+	@echo ""
+	@echo "=== SNES RetroTest Pipeline Test ==="
+	@echo ""
+	@echo "1. Running 60 frames with SNES mock core..."
+	./$(CLI) -c $(SNES_MOCK_CORE) -r $(SNES_TEST_ROM) -f 60 -H -v
+	@echo ""
+	@echo "2. Running 120 frames and checking memory..."
+	./$(CLI) -c $(SNES_MOCK_CORE) -r $(SNES_TEST_ROM) -f 120 -H
+	@echo ""
+	@echo "3. Testing SNES state save/load..."
+	./$(CLI) -c $(SNES_MOCK_CORE) -r $(SNES_TEST_ROM) -f 30 -S $(BUILD_DIR)/snes.state
+	./$(CLI) -c $(SNES_MOCK_CORE) -r $(SNES_TEST_ROM) -s $(BUILD_DIR)/snes.state -f 30 -H
+	@echo ""
+	@echo "4. Dumping SNES WRAM..."
+	./$(CLI) -c $(SNES_MOCK_CORE) -r $(SNES_TEST_ROM) -f 60 -m 2 $(BUILD_DIR)/snes_wram.bin
+	@ls -la $(BUILD_DIR)/snes_wram.bin
+	@echo ""
+	@echo "5. Checking SNES ID string in memory..."
+	@od -A x -t c -j 256 -N 21 $(BUILD_DIR)/snes_wram.bin
+	@echo ""
+	@echo "=== SNES tests passed! ==="
+
+# Dreamcast tests
+test-dc: $(CLI) $(DC_MOCK_CORE) $(DC_TEST_DISC)
+	@echo ""
+	@echo "=== Dreamcast RetroTest Pipeline Test ==="
+	@echo ""
+	@echo "1. Running 60 frames with Dreamcast mock core..."
+	./$(CLI) -c $(DC_MOCK_CORE) -r $(DC_TEST_DISC) -f 60 -H -v
+	@echo ""
+	@echo "2. Running 120 frames and checking memory..."
+	./$(CLI) -c $(DC_MOCK_CORE) -r $(DC_TEST_DISC) -f 120 -H
+	@echo ""
+	@echo "3. Testing Dreamcast state save/load..."
+	./$(CLI) -c $(DC_MOCK_CORE) -r $(DC_TEST_DISC) -f 30 -S $(BUILD_DIR)/dc.state
+	./$(CLI) -c $(DC_MOCK_CORE) -r $(DC_TEST_DISC) -s $(BUILD_DIR)/dc.state -f 30 -H
+	@echo ""
+	@echo "4. Dumping Dreamcast main RAM..."
+	./$(CLI) -c $(DC_MOCK_CORE) -r $(DC_TEST_DISC) -f 60 -m 2 $(BUILD_DIR)/dc_ram.bin
+	@ls -la $(BUILD_DIR)/dc_ram.bin
+	@echo ""
+	@echo "5. Checking Dreamcast ID string in memory..."
+	@od -A x -t c -j 256 -N 24 $(BUILD_DIR)/dc_ram.bin
+	@echo ""
+	@echo "=== Dreamcast tests passed! ==="
+
 # =============================================================================
 # Real Core Testing (when cores are available)
 # =============================================================================
@@ -165,6 +270,9 @@ clean:
 	rm -rf $(BUILD_DIR)
 	rm -f testrom/hello.md
 	rm -f testrom/saturn_test.bin testrom/saturn_test.cue
+	rm -f testrom/n64_test.z64
+	rm -f testrom/snes_test.sfc
+	rm -f testrom/dc_test.bin testrom/dc_test.cue
 
 # Docker
 docker-build:
